@@ -51,6 +51,10 @@ src/
 └── main.tsx            # 应用入口
 ```
 
+## 在线体验
+
+🎮 **立即体验游戏**: [https://journeyhans.github.io/whirlwind-demo/](https://journeyhans.github.io/whirlwind-demo/)
+
 ## 快速开始
 
 ### 安装依赖
