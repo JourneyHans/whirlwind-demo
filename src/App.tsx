@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import GameCanvas from './components/GameCanvas'
 import GameUI from './components/GameUI'
+import MobileControls from './components/MobileControls'
 import { GameState } from './types/GameTypes'
 import { useGameLoop } from './hooks/useGameLoop'
 import { useInputHandler } from './hooks/useInputHandler'
@@ -25,7 +26,7 @@ const App: React.FC = () => {
     isPaused: false
   })
 
-  const { inputState } = useInputHandler()
+  const { inputState, touchState, virtualJoystick, isMobile } = useInputHandler()
   const { startGame, stopGame, isRunning } = useGameLoop(gameState, setGameState, inputState)
 
   useEffect(() => {
@@ -61,6 +62,11 @@ const App: React.FC = () => {
         gameState={gameState} 
         onRestart={handleRestart}
         isRunning={isRunning}
+      />
+      <MobileControls 
+        touchState={touchState}
+        virtualJoystick={virtualJoystick}
+        isMobile={isMobile}
       />
     </div>
   )

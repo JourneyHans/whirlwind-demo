@@ -5,6 +5,20 @@
   display: flex;
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 移动设备优化 */
+@media (max-width: 768px) {
+  .app {
+    padding: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .app {
+    padding: 0;
+  }
 }
 
 * {

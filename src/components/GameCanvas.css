@@ -3,8 +3,26 @@
   background: #1a1a2e;
   cursor: crosshair;
   outline: none;
+  max-width: 100%;
+  height: auto;
+  touch-action: none; /* 防止移动设备上的默认触摸行为 */
 }
 
 .game-canvas:focus {
   border-color: #4ecdc4;
+}
+
+/* 移动设备优化 */
+@media (max-width: 768px) {
+  .game-canvas {
+    border-width: 1px;
+    max-width: calc(100vw - 20px);
+  }
+}
+
+@media (max-width: 480px) {
+  .game-canvas {
+    border-width: 1px;
+    max-width: calc(100vw - 10px);
+  }
 }

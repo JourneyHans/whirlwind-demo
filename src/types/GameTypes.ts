@@ -46,3 +46,22 @@ export interface InputState {
   left: boolean
   right: boolean
 }
+
+export interface TouchState {
+  isActive: boolean
+  startX: number
+  startY: number
+  currentX: number
+  currentY: number
+  deltaX: number
+  deltaY: number
+}
+
+export interface VirtualJoystick {
+  isActive: boolean
+  centerX: number
+  centerY: number
+  currentX: number
+  currentY: number
+  radius: number
+}

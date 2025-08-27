@@ -1,13 +1,18 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { GameState } from '../types/GameTypes'
+import { useInputHandler } from '../hooks/useInputHandler'
 import './GameCanvas.css'
 
 interface GameCanvasProps {
   gameState: GameState
 }
 
-const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null)
+    const { isMobile } = useInputHandler()
+    
+    // 响应式画布尺寸
+    const [scale, setScale] = useState(1)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -43,6 +48,73 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
 
   }, [gameState])
 
+  // 响应式画布尺寸调整
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      if (!canvasRef.current) return
+      
+      const canvas = canvasRef.current
+      const container = canvas.parentElement
+      if (!container) return
+      
+      const containerRect = container.getBoundingClientRect()
+      const maxWidth = Math.min(800, containerRect.width - 40)
+      const maxHeight = Math.min(600, containerRect.height - 40)
+      
+      // 保持宽高比
+      const aspectRatio = 800 / 600
+      let newWidth = maxWidth
+      let newHeight = maxWidth / aspectRatio
+      
+      if (newHeight > maxHeight) {
+        newHeight = maxHeight
+        newWidth = maxHeight * aspectRatio
+      }
+      
+      setScale(newWidth / 800)
+      
+      // 设置画布CSS尺寸
+      canvas.style.width = `${newWidth}px`
+      canvas.style.height = `${newHeight}px`
+    }
+    
+    updateCanvasSize()
+    window.addEventListener('resize', updateCanvasSize)
+    
+    return () => window.removeEventListener('resize', updateCanvasSize)
+  }, [])
+
+  // 触摸事件处理
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas || !isMobile) return
+
+    const handleTouchStart = (event: TouchEvent) => {
+      event.preventDefault()
+      // 触摸事件由useInputHandler处理
+    }
+
+    const handleTouchMove = (event: TouchEvent) => {
+      event.preventDefault()
+      // 触摸事件由useInputHandler处理
+    }
+
+    const handleTouchEnd = (event: TouchEvent) => {
+      event.preventDefault()
+      // 触摸事件由useInputHandler处理
+    }
+
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false })
+
+    return () => {
+      canvas.removeEventListener('touchstart', handleTouchStart)
+      canvas.removeEventListener('touchmove', handleTouchMove)
+      canvas.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [isMobile])
+
   const drawBackground = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     // 绘制深色背景
     ctx.fillStyle = '#1a1a2e'
@@ -50,8 +122,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
 
     // 绘制网格
     ctx.strokeStyle = '#16213e'
-    ctx.lineWidth = 1
-    const gridSize = 50
+    ctx.lineWidth = Math.max(1, 1 / scale)
+    const gridSize = 50 * scale
 
     for (let x = 0; x < width; x += gridSize) {
       ctx.beginPath()
@@ -75,20 +147,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
     // 玩家主体
     ctx.fillStyle = '#4ecdc4'
     ctx.beginPath()
-    ctx.arc(player.x, player.y, 20, 0, Math.PI * 2)
+    ctx.arc(player.x, player.y, 20 * scale, 0, Math.PI * 2)
     ctx.fill()
 
     // 玩家边框
     ctx.strokeStyle = '#45b7aa'
-    ctx.lineWidth = 3
+    ctx.lineWidth = Math.max(3, 3 * scale)
     ctx.stroke()
 
     // 旋风斩指示器
     ctx.strokeStyle = '#ff6b6b'
-    ctx.lineWidth = 2
-    ctx.setLineDash([5, 5])
+    ctx.lineWidth = Math.max(2, 2 * scale)
+    ctx.setLineDash([5 * scale, 5 * scale])
     ctx.beginPath()
-    ctx.arc(player.x, player.y, 80, 0, Math.PI * 2)
+    ctx.arc(player.x, player.y, 80 * scale, 0, Math.PI * 2)
     ctx.stroke()
 
     ctx.restore()
@@ -119,19 +191,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
     // 绘制敌人
     ctx.fillStyle = color
     ctx.beginPath()
-    ctx.arc(enemy.x, enemy.y, size, 0, Math.PI * 2)
+    ctx.arc(enemy.x, enemy.y, size * scale, 0, Math.PI * 2)
     ctx.fill()
 
     // 绘制血条
-    const healthBarWidth = size * 2
-    const healthBarHeight = 4
+    const healthBarWidth = size * 2 * scale
+    const healthBarHeight = 4 * scale
     const healthPercentage = enemy.health / enemy.maxHealth
 
     ctx.fillStyle = '#ff0000'
-    ctx.fillRect(enemy.x - healthBarWidth / 2, enemy.y - size - 10, healthBarWidth, healthBarHeight)
+    ctx.fillRect(enemy.x - healthBarWidth / 2, enemy.y - size * scale - 10 * scale, healthBarWidth, healthBarHeight)
 
     ctx.fillStyle = '#00ff00'
-    ctx.fillRect(enemy.x - healthBarWidth / 2, enemy.y - size - 10, healthBarWidth * healthPercentage, healthBarHeight)
+    ctx.fillRect(enemy.x - healthBarWidth / 2, enemy.y - size * scale - 10 * scale, healthBarWidth * healthPercentage, healthBarHeight)
   }
 
   const drawProjectile = (ctx: CanvasRenderingContext2D, projectile: GameState['projectiles'][0]) => {
@@ -142,9 +214,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
     ctx.globalAlpha = alpha
 
     ctx.strokeStyle = '#ff6b6b'
-    ctx.lineWidth = 2
+    ctx.lineWidth = Math.max(2, 2 * scale)
     ctx.beginPath()
-    ctx.arc(projectile.x, projectile.y, 3, 0, Math.PI * 2)
+    ctx.arc(projectile.x, projectile.y, 3 * scale, 0, Math.PI * 2)
     ctx.stroke()
 
     ctx.restore()
@@ -155,7 +227,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
     ctx.save()
     
     const time = Date.now() * 0.01
-    const radius = 80
+    const radius = 80 * scale
     
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2 + time
@@ -164,7 +236,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
       
       ctx.fillStyle = `rgba(255, 107, 107, ${0.3 + 0.2 * Math.sin(time + i)})`
       ctx.beginPath()
-      ctx.arc(x, y, 8, 0, Math.PI * 2)
+      ctx.arc(x, y, 8 * scale, 0, Math.PI * 2)
       ctx.fill()
     }
 
@@ -174,34 +246,34 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
   const drawUI = (ctx: CanvasRenderingContext2D, gameState: GameState) => {
     // 绘制游戏时间
     ctx.fillStyle = '#ffffff'
-    ctx.font = '16px Arial'
-    ctx.fillText(`时间: ${Math.floor(gameState.gameTime)}s`, 10, 30)
+    ctx.font = `${Math.max(16, 16 * scale)}px Arial`
+    ctx.fillText(`时间: ${Math.floor(gameState.gameTime)}s`, 10 * scale, 30 * scale)
 
     // 绘制分数
-    ctx.fillText(`分数: ${gameState.score}`, 10, 50)
+    ctx.fillText(`分数: ${gameState.score}`, 10 * scale, 50 * scale)
 
     // 绘制玩家等级
-    ctx.fillText(`等级: ${gameState.player.level}`, 10, 70)
+    ctx.fillText(`等级: ${gameState.player.level}`, 10 * scale, 70 * scale)
 
     // 绘制玩家血量
-    const healthBarWidth = 200
-    const healthBarHeight = 20
+    const healthBarWidth = 200 * scale
+    const healthBarHeight = 20 * scale
     const healthPercentage = gameState.player.health / gameState.player.maxHealth
 
     ctx.fillStyle = '#ff0000'
-    ctx.fillRect(10, 90, healthBarWidth, healthBarHeight)
+    ctx.fillRect(10 * scale, 90 * scale, healthBarWidth, healthBarHeight)
 
     ctx.fillStyle = '#00ff00'
-    ctx.fillRect(10, 90, healthBarWidth * healthPercentage, healthBarHeight)
+    ctx.fillRect(10 * scale, 90 * scale, healthBarWidth * healthPercentage, healthBarHeight)
 
     ctx.strokeStyle = '#ffffff'
-    ctx.lineWidth = 2
-    ctx.strokeRect(10, 90, healthBarWidth, healthBarHeight)
+    ctx.lineWidth = Math.max(2, 2 * scale)
+    ctx.strokeRect(10 * scale, 90 * scale, healthBarWidth, healthBarHeight)
 
     // 血量文字
     ctx.fillStyle = '#ffffff'
-    ctx.font = '14px Arial'
-    ctx.fillText(`${Math.floor(gameState.player.health)}/${gameState.player.maxHealth}`, 15, 105)
+    ctx.font = `${Math.max(14, 14 * scale)}px Arial`
+    ctx.fillText(`${Math.floor(gameState.player.health)}/${gameState.player.maxHealth}`, 15 * scale, 105 * scale)
   }
 
   return (
@@ -211,6 +283,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
       height={600}
       className="game-canvas"
       tabIndex={0}
+      style={{
+        maxWidth: '100%',
+        height: 'auto',
+        display: 'block',
+        margin: '0 auto'
+      }}
     />
   )
 }

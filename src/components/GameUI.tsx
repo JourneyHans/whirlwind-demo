@@ -1,5 +1,6 @@
 import React from 'react'
 import { GameState } from '../types/GameTypes'
+import { useInputHandler } from '../hooks/useInputHandler'
 import './GameUI.css'
 
 interface GameUIProps {
@@ -9,6 +10,7 @@ interface GameUIProps {
 }
 
 const GameUI: React.FC<GameUIProps> = ({ gameState, onRestart, isRunning }) => {
+  const { isMobile } = useInputHandler()
   if (gameState.isGameOver) {
     return (
       <div className="game-over-overlay">
@@ -74,24 +76,41 @@ const GameUI: React.FC<GameUIProps> = ({ gameState, onRestart, isRunning }) => {
 
         <div className="ui-section">
           <h3>控制说明</h3>
-          <div className="controls">
-            <div className="control-row">
-              <span>W/↑</span>
-              <span>向上移动</span>
+          {isMobile ? (
+            <div className="controls">
+              <div className="control-row">
+                <span>🎮</span>
+                <span>虚拟摇杆</span>
+              </div>
+              <div className="control-row">
+                <span>👆</span>
+                <span>触摸移动</span>
+              </div>
+              <div className="control-row">
+                <span>📱</span>
+                <span>移动设备</span>
+              </div>
             </div>
-            <div className="control-row">
-              <span>S/↓</span>
-              <span>向下移动</span>
+          ) : (
+            <div className="controls">
+              <div className="control-row">
+                <span>W/↑</span>
+                <span>向上移动</span>
+              </div>
+              <div className="control-row">
+                <span>S/↓</span>
+                <span>向下移动</span>
+              </div>
+              <div className="control-row">
+                <span>A/←</span>
+                <span>向左移动</span>
+              </div>
+              <div className="control-row">
+                <span>D/→</span>
+                <span>向右移动</span>
+              </div>
             </div>
-            <div className="control-row">
-              <span>A/←</span>
-              <span>向左移动</span>
-            </div>
-            <div className="control-row">
-              <span>D/→</span>
-              <span>向右移动</span>
-            </div>
-          </div>
+          )}
         </div>
 
         <div className="ui-section">
