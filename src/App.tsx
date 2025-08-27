@@ -26,15 +26,18 @@ const App: React.FC = () => {
     isPaused: false
   })
 
-  const { inputState, touchState, virtualJoystick, isMobile } = useInputHandler()
+  const { inputState, touchState, virtualJoystick, isMobile, resetInputState } = useInputHandler()
   const { startGame, stopGame, isRunning } = useGameLoop(gameState, setGameState, inputState)
 
   useEffect(() => {
     startGame()
     return () => stopGame()
-  }, [startGame, stopGame])
+  }, []) // 只在组件挂载时启动游戏，避免重复启动
 
   const handleRestart = () => {
+    // 重置输入状态
+    resetInputState()
+    
     setGameState({
       player: {
         x: 400,

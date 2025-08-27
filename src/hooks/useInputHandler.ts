@@ -66,24 +66,26 @@ export const useInputHandler = () => {
       const x = touch.clientX - rect.left
       const y = touch.clientY - rect.top
 
-      setTouchState(prev => ({
-        ...prev,
-        currentX: x,
-        currentY: y,
-        deltaX: x - prev.startX,
-        deltaY: y - prev.startY
-      }))
-
-      // 根据触摸移动方向设置输入状态
-      const threshold = 20 // 触摸移动阈值
-      const deltaX = x - touchState.startX
-      const deltaY = y - touchState.startY
-
-      setInputState({
-        up: deltaY < -threshold,
-        down: deltaY > threshold,
-        left: deltaX < -threshold,
-        right: deltaX > threshold
+      setTouchState(prev => {
+        const newDeltaX = x - prev.startX
+        const newDeltaY = y - prev.startY
+        
+        // 根据触摸移动方向设置输入状态
+        const threshold = 20 // 触摸移动阈值
+        setInputState({
+          up: newDeltaY < -threshold,
+          down: newDeltaY > threshold,
+          left: newDeltaX < -threshold,
+          right: newDeltaX > threshold
+        })
+        
+        return {
+          ...prev,
+          currentX: x,
+          currentY: y,
+          deltaX: newDeltaX,
+          deltaY: newDeltaY
+        }
       })
     }
   }
@@ -185,6 +187,33 @@ export const useInputHandler = () => {
     })
   }
 
+  // 重置所有输入状态的函数
+  const resetInputState = () => {
+    setInputState({
+      up: false,
+      down: false,
+      left: false,
+      right: false
+    })
+    setTouchState({
+      isActive: false,
+      startX: 0,
+      startY: 0,
+      currentX: 0,
+      currentY: 0,
+      deltaX: 0,
+      deltaY: 0
+    })
+    setVirtualJoystick({
+      isActive: false,
+      centerX: 0,
+      centerY: 0,
+      currentX: 0,
+      currentY: 0,
+      radius: 60
+    })
+  }
+
   useEffect(() => {
     // 检测是否为移动设备
     isMobile.current = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
@@ -242,7 +271,7 @@ export const useInputHandler = () => {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
     }
-  }, [touchState.isActive, virtualJoystick.isActive])
+  }, []) // 移除有问题的依赖，只在组件挂载时绑定一次
 
   return { 
     inputState, 
@@ -254,6 +283,7 @@ export const useInputHandler = () => {
     handleTouchEnd,
     handleJoystickTouchStart,
     handleJoystickTouchMove,
-    handleJoystickTouchEnd
+    handleJoystickTouchEnd,
+    resetInputState
   }
 }
