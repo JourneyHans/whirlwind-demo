@@ -34,7 +34,11 @@ export const useInputHandler = () => {
   const handleTouchStart = (event: TouchEvent) => {
     if (event.touches.length === 1) {
       const touch = event.touches[0]
-      const rect = (event.target as HTMLElement).getBoundingClientRect()
+      // 使用画布元素作为参考，而不是触摸目标
+      const canvas = document.querySelector('.game-canvas') as HTMLElement
+      if (!canvas) return
+      
+      const rect = canvas.getBoundingClientRect()
       const x = touch.clientX - rect.left
       const y = touch.clientY - rect.top
 
@@ -54,7 +58,11 @@ export const useInputHandler = () => {
   const handleTouchMove = (event: TouchEvent) => {
     if (event.touches.length === 1 && touchState.isActive) {
       const touch = event.touches[0]
-      const rect = (event.target as HTMLElement).getBoundingClientRect()
+      // 使用画布元素作为参考，而不是触摸目标
+      const canvas = document.querySelector('.game-canvas') as HTMLElement
+      if (!canvas) return
+      
+      const rect = canvas.getBoundingClientRect()
       const x = touch.clientX - rect.left
       const y = touch.clientY - rect.top
 
@@ -99,7 +107,11 @@ export const useInputHandler = () => {
   const handleJoystickTouchStart = (event: TouchEvent) => {
     if (event.touches.length === 1) {
       const touch = event.touches[0]
-      const rect = (event.target as HTMLElement).getBoundingClientRect()
+      // 使用画布元素作为参考，而不是触摸目标
+      const canvas = document.querySelector('.game-canvas') as HTMLElement
+      if (!canvas) return
+      
+      const rect = canvas.getBoundingClientRect()
       const x = touch.clientX - rect.left
       const y = touch.clientY - rect.top
 
@@ -117,7 +129,11 @@ export const useInputHandler = () => {
   const handleJoystickTouchMove = (event: TouchEvent) => {
     if (event.touches.length === 1 && virtualJoystick.isActive) {
       const touch = event.touches[0]
-      const rect = (event.target as HTMLElement).getBoundingClientRect()
+      // 使用画布元素作为参考，而不是触摸目标
+      const canvas = document.querySelector('.game-canvas') as HTMLElement
+      if (!canvas) return
+      
+      const rect = canvas.getBoundingClientRect()
       const x = touch.clientX - rect.left
       const y = touch.clientY - rect.top
 

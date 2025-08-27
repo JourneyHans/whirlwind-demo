@@ -9,7 +9,16 @@ interface GameCanvasProps {
 
   const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
-    const { isMobile } = useInputHandler()
+    const { 
+      isMobile, 
+      handleTouchStart, 
+      handleTouchMove, 
+      handleTouchEnd,
+      handleJoystickTouchStart,
+      handleJoystickTouchMove,
+      handleJoystickTouchEnd,
+      virtualJoystick
+    } = useInputHandler()
     
     // 响应式画布尺寸
     const [scale, setScale] = useState(1)
@@ -45,6 +54,11 @@ interface GameCanvasProps {
 
     // 绘制UI元素
     drawUI(ctx, gameState)
+    
+    // 在移动设备上绘制虚拟摇杆
+    if (isMobile) {
+      drawVirtualJoystick(ctx)
+    }
 
   }, [gameState])
 
@@ -89,31 +103,63 @@ interface GameCanvasProps {
     const canvas = canvasRef.current
     if (!canvas || !isMobile) return
 
-    const handleTouchStart = (event: TouchEvent) => {
+    const canvasTouchStart = (event: TouchEvent) => {
       event.preventDefault()
-      // 触摸事件由useInputHandler处理
+      
+      // 检查触摸位置是否在摇杆区域
+      const touch = event.touches[0]
+      const rect = canvas.getBoundingClientRect()
+      const x = touch.clientX - rect.left
+      const y = touch.clientY - rect.top
+      
+      // 摇杆区域（左下角）
+      const joystickArea = {
+        x: 100 * scale - 60 * scale,
+        y: 500 * scale - 60 * scale,
+        width: 120 * scale,
+        height: 120 * scale
+      }
+      
+      if (x >= joystickArea.x && x <= joystickArea.x + joystickArea.width &&
+          y >= joystickArea.y && y <= joystickArea.y + joystickArea.height) {
+        // 触摸在摇杆区域，使用摇杆触摸处理
+        handleJoystickTouchStart(event)
+      } else {
+        // 触摸在其他区域，使用普通触摸处理
+        handleTouchStart(event)
+      }
     }
 
-    const handleTouchMove = (event: TouchEvent) => {
+    const canvasTouchMove = (event: TouchEvent) => {
       event.preventDefault()
-      // 触摸事件由useInputHandler处理
+      
+      if (virtualJoystick.isActive) {
+        handleJoystickTouchMove(event)
+      } else {
+        handleTouchMove(event)
+      }
     }
 
-    const handleTouchEnd = (event: TouchEvent) => {
+    const canvasTouchEnd = (event: TouchEvent) => {
       event.preventDefault()
-      // 触摸事件由useInputHandler处理
+      
+      if (virtualJoystick.isActive) {
+        handleJoystickTouchEnd()
+      } else {
+        handleTouchEnd()
+      }
     }
 
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
-    canvas.addEventListener('touchend', handleTouchEnd, { passive: false })
+    canvas.addEventListener('touchstart', canvasTouchStart, { passive: false })
+    canvas.addEventListener('touchmove', canvasTouchMove, { passive: false })
+    canvas.addEventListener('touchend', canvasTouchEnd, { passive: false })
 
     return () => {
-      canvas.removeEventListener('touchstart', handleTouchStart)
-      canvas.removeEventListener('touchmove', handleTouchMove)
-      canvas.removeEventListener('touchend', handleTouchEnd)
+      canvas.removeEventListener('touchstart', canvasTouchStart)
+      canvas.removeEventListener('touchmove', canvasTouchMove)
+      canvas.removeEventListener('touchend', canvasTouchEnd)
     }
-  }, [isMobile])
+  }, [isMobile, handleTouchStart, handleTouchMove, handleTouchEnd, handleJoystickTouchStart, handleJoystickTouchMove, handleJoystickTouchEnd, virtualJoystick.isActive, scale])
 
   const drawBackground = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     // 绘制深色背景
@@ -274,6 +320,56 @@ interface GameCanvasProps {
     ctx.fillStyle = '#ffffff'
     ctx.font = `${Math.max(14, 14 * scale)}px Arial`
     ctx.fillText(`${Math.floor(gameState.player.health)}/${gameState.player.maxHealth}`, 15 * scale, 105 * scale)
+  }
+
+  const drawVirtualJoystick = (ctx: CanvasRenderingContext2D) => {
+    if (!virtualJoystick.isActive) {
+      // 绘制默认摇杆位置（左下角）
+      const centerX = 100 * scale
+      const centerY = 500 * scale
+      const radius = 60 * scale
+      
+      // 绘制摇杆外圈
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+      ctx.lineWidth = Math.max(2, 2 * scale)
+      ctx.beginPath()
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
+      ctx.stroke()
+      
+      // 绘制摇杆中心点
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'
+      ctx.beginPath()
+      ctx.arc(centerX, centerY, 15 * scale, 0, Math.PI * 2)
+      ctx.fill()
+    } else {
+      // 绘制激活状态的摇杆
+      const centerX = virtualJoystick.centerX
+      const centerY = virtualJoystick.centerY
+      const currentX = virtualJoystick.currentX
+      const currentY = virtualJoystick.currentY
+      const radius = virtualJoystick.radius * scale
+      
+      // 绘制摇杆外圈
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'
+      ctx.lineWidth = Math.max(2, 2 * scale)
+      ctx.beginPath()
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
+      ctx.stroke()
+      
+      // 绘制摇杆手柄
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+      ctx.beginPath()
+      ctx.arc(currentX, currentY, 20 * scale, 0, Math.PI * 2)
+      ctx.fill()
+      
+      // 绘制连接线
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+      ctx.lineWidth = Math.max(1, 1 * scale)
+      ctx.beginPath()
+      ctx.moveTo(centerX, centerY)
+      ctx.lineTo(currentX, currentY)
+      ctx.stroke()
+    }
   }
 
   return (
